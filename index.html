@@ -9,13 +9,23 @@
 
 <h2>Rock Paper Scissors Game</h2>
 
-Choose: 
-<button onclick="playGame(1)">Rock</button>
-<button onclick="playGame(2)">Paper</button>
-<button onclick="playGame(3)">Scissors</button>
+<p>Choose your play:</p>
+<select id="playerChoice">
+    <option value="1">Rock</option>
+    <option value="2">Paper</option>
+    <option value="3">Scissors</option>
+</select>
+
+<p>Enter a secret:</p>
+<input type="text" id="secretString" placeholder="Your secret string">
+
+<button onclick="startGame()">Start Game</button>
+<button onclick="joinGame()">Join Game</button>
+<button onclick="revealChoice()">Reveal Choice</button>
 
 <div id="results"></div>
 
+<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.9/dist/web3.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
