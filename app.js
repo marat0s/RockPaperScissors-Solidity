@@ -15,6 +15,25 @@ async function init() {
 		"inputs": [
 			{
 				"indexed": false,
+				"internalType": "bytes32",
+				"name": "gameId",
+				"type": "bytes32"
+			}
+		],
+		"name": "GameCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "gameId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
 				"internalType": "address",
 				"name": "winner",
 				"type": "address"
@@ -34,6 +53,12 @@ async function init() {
 		"inputs": [
 			{
 				"indexed": false,
+				"internalType": "bytes32",
+				"name": "gameId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
 				"internalType": "address",
 				"name": "player",
 				"type": "address"
@@ -43,21 +68,14 @@ async function init() {
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "encryptedMove",
-				"type": "bytes32"
-			}
-		],
-		"name": "play",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "gameId",
+				"type": "bytes32"
+			},
 			{
 				"indexed": false,
 				"internalType": "address",
@@ -67,112 +85,6 @@ async function init() {
 		],
 		"name": "PlayerRegistered",
 		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "register",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "enum RockPaperScissors.Move",
-				"name": "move",
-				"type": "uint8"
-			},
-			{
-				"internalType": "string",
-				"name": "password",
-				"type": "string"
-			}
-		],
-		"name": "reveal",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "bothPlayed",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "bothRevealed",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getContractBalance",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "numPlayers",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "players",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "encryptedMove",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "enum RockPaperScissors.Move",
-				"name": "move",
-				"type": "uint8"
-			},
-			{
-				"internalType": "address payable",
-				"name": "addr",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
 	},
 	{
 		"inputs": [],
@@ -188,42 +100,106 @@ async function init() {
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "revealDeadline",
-		"outputs": [
+		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
+				"internalType": "bytes32",
+				"name": "encryptedMove",
+				"type": "bytes32"
 			}
 		],
-		"stateMutability": "view",
+		"name": "createGame",
+		"outputs": [],
+		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "revealTimeLeft",
-		"outputs": [
+		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "bytes32",
 				"name": "",
-				"type": "uint256"
+				"type": "bytes32"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "whoAmI",
+		"name": "games",
 		"outputs": [
 			{
-				"internalType": "uint8",
-				"name": "",
+				"internalType": "bytes32",
+				"name": "player1Move",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "player2Move",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "enum RockPaperScissors.Move",
+				"name": "revealedMove1",
 				"type": "uint8"
+			},
+			{
+				"internalType": "enum RockPaperScissors.Move",
+				"name": "revealedMove2",
+				"type": "uint8"
+			},
+			{
+				"internalType": "address payable",
+				"name": "player1",
+				"type": "address"
+			},
+			{
+				"internalType": "address payable",
+				"name": "player2",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "revealDeadline",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "gameId",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "encryptedMove",
+				"type": "bytes32"
+			}
+		],
+		"name": "joinGame",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "gameId",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "enum RockPaperScissors.Move",
+				"name": "move",
+				"type": "uint8"
+			},
+			{
+				"internalType": "string",
+				"name": "password",
+				"type": "string"
+			}
+		],
+		"name": "reveal",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ]; // Replace with your contract ABI
