@@ -1,5 +1,4 @@
-const web3 = new Web3(Web3.givenProvider); // Using MetaMask's provider
-const contractAddress = '0x6176C438186cC9f5F42aFafEE16758Ee3cc11DAd'; // Replace with your deployed contract address
+const contractAddress = '0x6176C438186cC9f5F42aFafEE16758Ee3cc11DAd'; 
 const contractABI = [
 	{
 		"inputs": [],
@@ -238,90 +237,24 @@ const contractABI = [
 		"stateMutability": "view",
 		"type": "function"
 	}
-]; // Replace with your contract ABI
+]; 
+let web3 = new Web3(Web3.givenProvider);
+let contract = new web3.eth.Contract(abi, contractAddress);
 
-const contract = new web3.eth.Contract(contractABI, contractAddress);
-
-let accounts = [];
-
-async function init() {
-    accounts = await web3.eth.getAccounts();
-    setupEventListeners();
-}
-
-function setupEventListeners() {
-    contract.events.NewGame({}, (error, event) => {
-        if (error) {
-            console.error("Error in NewGame event:", error);
-            return;
-        }
-        document.getElementById('player1Info').innerText = `Player 1: ${event.returnValues.player1}`;
-    });
-
-    contract.events.PlayerJoined({}, (error, event) => {
-        if (error) {
-            console.error("Error in PlayerJoined event:", error);
-            return;
-        }
-        document.getElementById('player2Info').innerText = `Player 2: ${event.returnValues.player2}`;
-    });
-
-    contract.events.Revealed({}, (error, event) => {
-        if (error) {
-            console.error("Error in Revealed event:", error);
-            return;
-        }
-
-        if (event.returnValues.player === accounts[0]) {
-            document.getElementById('choiceInfo').innerText = `Your choice: ${convertChoice(event.returnValues.choice)}`;
-        } else {
-            document.getElementById('choiceInfo').innerText += `\nOpponent's choice: ${convertChoice(event.returnValues.choice)}`;
-        }
-    });
-
-    contract.events.GameResult({}, (error, event) => {
-        if (error) {
-            console.error("Error in GameResult event:", error);
-            return;
-        }
-        document.getElementById('results').innerText = `Winner: ${event.returnValues.winner}, Reward: ${web3.utils.fromWei(event.returnValues.reward, 'ether')} ETH`;
+async function playGame(choice) {
+    const accounts = await web3.eth.getAccounts();
+    await contract.methods.play(choice).send({
+        from: accounts[0],
+        value: web3.utils.toWei('0.0001', 'ether')
     });
 }
 
-function convertChoice(choiceValue) {
-    switch (choiceValue) {
-        case '1':
-            return 'Rock';
-        case '2':
-            return 'Paper';
-        case '3':
-            return 'Scissors';
-        default:
-            return 'Unknown';
-    }
-}
+contract.events.Played({}, (error, event) => {
+    if (error) console.error(error);
+    document.getElementById('results').innerHTML = `You played ${event.returnValues.choice}`;
+});
 
-async function startGame() {
-    const choice = document.getElementById('playerChoice').value;
-    const secret = document.getElementById('secretString').value;
-    const hashedCommit = await contract.methods.getChoiceCommit(choice, secret).call();
-
-    contract.methods.startGame(hashedCommit).send({ from: accounts[0], value: web3.utils.toWei('0.0001', 'ether') });
-}
-
-async function joinGame() {
-    const choice = document.getElementById('playerChoice').value;
-    const secret = document.getElementById('secretString').value;
-    const hashedCommit = await contract.methods.getChoiceCommit(choice, secret).call();
-
-    contract.methods.joinGame(hashedCommit).send({ from: accounts[0], value: web3.utils.toWei('0.0001', 'ether') });
-}
-
-async function revealChoice() {
-    const choice = document.getElementById('playerChoice').value;
-    const secret = document.getElementById('secretString').value;
-
-    contract.methods.revealChoice(choice, secret).send({ from: accounts[0] });
-}
-
-init();
+contract.events.Result({}, (error, event) => {
+    if (error) console.error(error);
+    document.getElementById('results').innerHTML += `<br>You won ${web3.utils.fromWei(event.returnValues.reward, 'ether')} tBNB!`;
+});
