@@ -1,41 +1,23 @@
-let web3 = new Web3(window.ethereum);
-let contract;
-let userAddress;
-
-async function init() {
-    let networkId = await web3.eth.net.getId();
-    if (typeof window.ethereum !== 'undefined') {
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        userAddress = (await web3.eth.getAccounts())[0];
-
-        let contractAddress = "0x8496A2f4F889D86AD26cC7A512E5faAFEc88C648"; // Replace with your deployed contract address
-        let abi = [
+const contractAddress = '0xfe38EE6135e8CB7fA8201eCf7ab45fffe4152ADe'; // Replace with your deployed contract address
+const abi = [
 	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "bytes32",
-				"name": "gameId",
-				"type": "bytes32"
-			}
-		],
-		"name": "GameCreated",
-		"type": "event"
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
 	},
 	{
 		"anonymous": false,
 		"inputs": [
 			{
 				"indexed": false,
-				"internalType": "bytes32",
-				"name": "gameId",
-				"type": "bytes32"
+				"internalType": "address",
+				"name": "winner",
+				"type": "address"
 			},
 			{
 				"indexed": false,
 				"internalType": "address",
-				"name": "winner",
+				"name": "loser",
 				"type": "address"
 			},
 			{
@@ -45,7 +27,39 @@ async function init() {
 				"type": "uint256"
 			}
 		],
-		"name": "GameFinished",
+		"name": "GameResult",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_commit",
+				"type": "bytes32"
+			}
+		],
+		"name": "joinGame",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "player1",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "commit",
+				"type": "bytes32"
+			}
+		],
+		"name": "NewGame",
 		"type": "event"
 	},
 	{
@@ -53,42 +67,73 @@ async function init() {
 		"inputs": [
 			{
 				"indexed": false,
-				"internalType": "bytes32",
-				"name": "gameId",
-				"type": "bytes32"
+				"internalType": "address",
+				"name": "player2",
+				"type": "address"
 			},
 			{
 				"indexed": false,
-				"internalType": "address",
-				"name": "player",
-				"type": "address"
+				"internalType": "bytes32",
+				"name": "commit",
+				"type": "bytes32"
 			}
 		],
-		"name": "MoveMade",
+		"name": "PlayerJoined",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "_choice",
+				"type": "uint8"
+			},
+			{
+				"internalType": "string",
+				"name": "_secret",
+				"type": "string"
+			}
+		],
+		"name": "revealChoice",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"anonymous": false,
 		"inputs": [
 			{
 				"indexed": false,
-				"internalType": "bytes32",
-				"name": "gameId",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
 				"internalType": "address",
 				"name": "player",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "choice",
+				"type": "uint8"
 			}
 		],
-		"name": "PlayerRegistered",
+		"name": "Revealed",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_commit",
+				"type": "bytes32"
+			}
+		],
+		"name": "startGame",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
 	},
 	{
 		"inputs": [],
-		"name": "REVEAL_TIMEOUT",
+		"name": "betAmount",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -100,48 +145,9 @@ async function init() {
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "encryptedMove",
-				"type": "bytes32"
-			}
-		],
-		"name": "createGame",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"name": "games",
+		"inputs": [],
+		"name": "currentGame",
 		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "player1Move",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "player2Move",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "enum RockPaperScissors.Move",
-				"name": "revealedMove1",
-				"type": "uint8"
-			},
-			{
-				"internalType": "enum RockPaperScissors.Move",
-				"name": "revealedMove2",
-				"type": "uint8"
-			},
 			{
 				"internalType": "address payable",
 				"name": "player1",
@@ -153,9 +159,29 @@ async function init() {
 				"type": "address"
 			},
 			{
-				"internalType": "uint256",
-				"name": "revealDeadline",
-				"type": "uint256"
+				"internalType": "bytes32",
+				"name": "player1Commit",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "player2Commit",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "player1Reveal",
+				"type": "uint8"
+			},
+			{
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "player2Reveal",
+				"type": "uint8"
+			},
+			{
+				"internalType": "enum RockPaperScissors.GameState",
+				"name": "state",
+				"type": "uint8"
 			}
 		],
 		"stateMutability": "view",
@@ -164,78 +190,98 @@ async function init() {
 	{
 		"inputs": [
 			{
-				"internalType": "bytes32",
-				"name": "gameId",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "encryptedMove",
-				"type": "bytes32"
-			}
-		],
-		"name": "joinGame",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "gameId",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "enum RockPaperScissors.Move",
-				"name": "move",
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "_choice",
 				"type": "uint8"
 			},
 			{
 				"internalType": "string",
-				"name": "password",
+				"name": "_secret",
 				"type": "string"
 			}
 		],
-		"name": "reveal",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"name": "getChoiceCommit",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getContractBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	}
 ]; // Replace with your contract ABI
 
-        contract = new web3.eth.Contract(abi, contractAddress);
-    } else {
-        alert("Please install MetaMask!");
-    }
+let web3 = new Web3(Web3.givenProvider);
+let contract = new web3.eth.Contract(abi, contractAddress);
+
+async function startGame() {
+    const choice = document.getElementById("playerChoice").value;
+    const secret = document.getElementById("secretString").value;
+
+    const hash = await contract.methods.getChoiceCommit(choice, secret).call();
+
+    const accounts = await web3.eth.getAccounts();
+    await contract.methods.startGame(hash).send({
+        from: accounts[0],
+        value: web3.utils.toWei('0.0001', 'ether')
+    });
+    document.getElementById("results").innerText = "Game started!";
 }
 
-async function register() {
-    await contract.methods.register().send({ value: web3.utils.toWei('0.0001', 'ether'), from: userAddress });
+async function joinGame() {
+    const choice = document.getElementById("playerChoice").value;
+    const secret = document.getElementById("secretString").value;
+
+    const hash = await contract.methods.getChoiceCommit(choice, secret).call();
+
+    const accounts = await web3.eth.getAccounts();
+    await contract.methods.joinGame(hash).send({
+        from: accounts[0],
+        value: web3.utils.toWei('0.0001', 'ether')
+    });
+    document.getElementById("results").innerText = "Joined game!";
 }
 
-async function play() {
-    let move = document.getElementById('move').value;
-    let password = document.getElementById('password').value;
-    let encryptedMove = web3.utils.sha3(move + password);
+async function revealChoice() {
+    const choice = document.getElementById("playerChoice").value;
+    const secret = document.getElementById("secretString").value;
 
-    await contract.methods.play(encryptedMove).send({ from: userAddress });
+    const accounts = await web3.eth.getAccounts();
+    await contract.methods.revealChoice(choice, secret).send({ from: accounts[0] });
+    document.getElementById("results").innerText = "Choice revealed!";
 }
 
-async function reveal() {
-    let move = document.getElementById('move').value;
-    let password = document.getElementById('password').value;
-
-    // Convert move string to enum value
-    let moveEnum = { "Rock": 1, "Paper": 2, "Scissors": 3 };
-    await contract.methods.reveal(moveEnum[move], password).send({ from: userAddress });
-}
-
-async function getGameInfo() {
-    let info = "Player 1: " + (await contract.methods.players(0).call()).addr;
-    info += "\nPlayer 2: " + (await contract.methods.players(1).call()).addr;
-
-    document.getElementById('gameInfo').innerText = info;
-}
-
-init();
+contract.events.GameResult({}, (error, event) => {
+    if (error) console.error(error);
+    const winner = event.returnValues.winner;
+    const reward = web3.utils.fromWei(event.returnValues.reward, 'ether');
+    document.getElementById("results").innerText = `${winner} won ${reward} tBNB!`;
+});
