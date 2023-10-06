@@ -241,20 +241,46 @@ const contractABI = [
 let web3 = new Web3(Web3.givenProvider);
 let contract = new web3.eth.Contract(abi, contractAddress);
 
-async function playGame(choice) {
+async function startGame() {
+    const choice = document.getElementById("playerChoice").value;
+    const secret = document.getElementById("secretString").value;
+
+    const hash = await contract.methods.getChoiceCommit(choice, secret).call();
+
     const accounts = await web3.eth.getAccounts();
-    await contract.methods.play(choice).send({
+    await contract.methods.startGame(hash).send({
         from: accounts[0],
         value: web3.utils.toWei('0.0001', 'ether')
     });
+    document.getElementById("results").innerText = "Game started!";
 }
 
-contract.events.Played({}, (error, event) => {
-    if (error) console.error(error);
-    document.getElementById('results').innerHTML = `You played ${event.returnValues.choice}`;
-});
+async function joinGame() {
+    const choice = document.getElementById("playerChoice").value;
+    const secret = document.getElementById("secretString").value;
 
-contract.events.Result({}, (error, event) => {
+    const hash = await contract.methods.getChoiceCommit(choice, secret).call();
+
+    const accounts = await web3.eth.getAccounts();
+    await contract.methods.joinGame(hash).send({
+        from: accounts[0],
+        value: web3.utils.toWei('0.0001', 'ether')
+    });
+    document.getElementById("results").innerText = "Joined game!";
+}
+
+async function revealChoice() {
+    const choice = document.getElementById("playerChoice").value;
+    const secret = document.getElementById("secretString").value;
+
+    const accounts = await web3.eth.getAccounts();
+    await contract.methods.revealChoice(choice, secret).send({ from: accounts[0] });
+    document.getElementById("results").innerText = "Choice revealed!";
+}
+
+contract.events.GameResult({}, (error, event) => {
     if (error) console.error(error);
-    document.getElementById('results').innerHTML += `<br>You won ${web3.utils.fromWei(event.returnValues.reward, 'ether')} tBNB!`;
+    const winner = event.returnValues.winner;
+    const reward = web3.utils.fromWei(event.returnValues.reward, 'ether');
+    document.getElementById("results").innerText = `${winner} won ${reward} tBNB!`;
 });
