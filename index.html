@@ -1,31 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rock Paper Scissors</title>
-    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.3.4/dist/web3.min.js"></script>
 </head>
-
 <body>
 
-    <h2>Rock Paper Scissors Game</h2>
+<h2>Rock Paper Scissors Game</h2>
 
-    <button onclick="createGame()">Create Game</button>
-    <br><br>
+<p>Choose your play:</p>
+<select id="playerChoice">
+    <option value="1">Rock</option>
+    <option value="2">Paper</option>
+    <option value="3">Scissors</option>
+</select>
 
-    <input id="gameId" placeholder="Enter gameId (if joining or revealing)">
-    <input id="move" placeholder="Enter your move: Rock/Paper/Scissors">
-    <input id="password" placeholder="Enter a password">
-    <button onclick="joinGame()">Join Game</button>
-    <button onclick="revealMove()">Reveal Move</button>
-    <br><br>
+<p>Enter a secret:</p>
+<input type="text" id="secretString" placeholder="Your secret string">
 
-    <h4>Game Info:</h4>
-    <button onclick="getGameInfo()">Refresh Game Info</button>
-    <p id="gameInfo">...</p>
+<button onclick="startGame()">Start Game</button>
+<button onclick="joinGame()">Join Game</button>
+<button onclick="revealChoice()">Reveal Choice</button>
 
-    <script src="app.js"></script>
+<div id="results"></div>
+
+<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.2.9/dist/web3.min.js"></script>
+<script src="app.js"></script>
 </body>
-
 </html>
