@@ -1,4 +1,4 @@
-const contractAddress = '0xa3E820f6C6F32436464ccA2e301cf4BB64785339'; // Replace with your deployed contract address
+const contractAddress = '0x6176C438186cC9f5F42aFafEE16758Ee3cc11DAd'; // Replace with your deployed contract address
 const abi = [
 	{
 		"inputs": [],
@@ -19,6 +19,12 @@ const abi = [
 				"internalType": "address",
 				"name": "loser",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "reward",
+				"type": "uint256"
 			}
 		],
 		"name": "GameResult",
@@ -45,6 +51,12 @@ const abi = [
 				"internalType": "address",
 				"name": "player1",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "commit",
+				"type": "bytes32"
 			}
 		],
 		"name": "NewGame",
@@ -58,6 +70,12 @@ const abi = [
 				"internalType": "address",
 				"name": "player2",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "commit",
+				"type": "bytes32"
 			}
 		],
 		"name": "PlayerJoined",
@@ -89,6 +107,12 @@ const abi = [
 				"internalType": "address",
 				"name": "player",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "choice",
+				"type": "uint8"
 			}
 		],
 		"name": "Revealed",
