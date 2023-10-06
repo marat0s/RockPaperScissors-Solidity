@@ -1,41 +1,35 @@
-const web3 = new Web3(window.ethereum);
+// Connect to Metamask
+window.addEventListener('load', async () => {
+    if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+            await ethereum.enable(); // Request access
+        } catch (error) {
+            console.error("User denied account access");
+        }
+    }
+    else if (window.web3) {
+        window.web3 = new Web3(web3.currentProvider);
+    }
+    else {
+        console.error('Non-Ethereum browser detected. Consider trying MetaMask!');
+    }
+    initApp();
+});
 
-async function init() {
-    await window.ethereum.enable();
-
-    const contractAddress = "0x41A4F119dAe0ef9C48452cDAAcc4a057D7ccf3AF"; // Replace with your contract's address
-    const abi = [
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "encryptedMove",
-				"type": "bytes32"
-			}
-		],
-		"name": "play",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
+const contractAddress = '0x5E05Eff66E4DcF5272963Cbbc63B18556A790F79';
+const abi = [
 	{
 		"inputs": [],
-		"name": "register",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
+		"name": "betAmount",
+		"outputs": [
 			{
-				"internalType": "string",
-				"name": "clearMove",
-				"type": "string"
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
-		"name": "reveal",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -78,24 +72,24 @@ async function init() {
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "getOutcome",
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_encryptedMove",
+				"type": "bytes32"
+			}
+		],
+		"name": "play",
 		"outputs": [],
-		"stateMutability": "view",
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "playerAddresses",
+		"inputs": [],
+		"name": "player1",
 		"outputs": [
 			{
-				"internalType": "address",
+				"internalType": "address payable",
 				"name": "",
 				"type": "address"
 			}
@@ -104,14 +98,8 @@ async function init() {
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "players",
+		"inputs": [],
+		"name": "player1Data",
 		"outputs": [
 			{
 				"internalType": "bytes32",
@@ -122,19 +110,65 @@ async function init() {
 				"internalType": "enum RockPaperScissors.Move",
 				"name": "move",
 				"type": "uint8"
-			},
-			{
-				"internalType": "bool",
-				"name": "hasRevealed",
-				"type": "bool"
-			},
-			{
-				"internalType": "uint256",
-				"name": "betAmount",
-				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "player2",
+		"outputs": [
+			{
+				"internalType": "address payable",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "player2Data",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "encryptedMove",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "enum RockPaperScissors.Move",
+				"name": "move",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "register",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_move",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_password",
+				"type": "string"
+			}
+		],
+		"name": "reveal",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -168,87 +202,56 @@ async function init() {
 		"name": "whoAmI",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "int256",
 				"name": "",
-				"type": "uint256"
+				"type": "int256"
 			}
 		],
 		"stateMutability": "view",
 		"type": "function"
 	}
-]; // Replace with your contract's ABI (available in Remix after compiling)
+]; // TODO: Add your ABI generated from the Solidity compiler
+const contract = new web3.eth.Contract(abi, contractAddress);
 
-    const contract = new web3.eth.Contract(abi, contractAddress);
-    const accounts = await web3.eth.getAccounts();
-
-    document.getElementById('register').addEventListener('click', async () => {
-        const response = await contract.methods.register().send({ from: accounts[0], value: web3.utils.toWei("0.0001", "tbnb") });
-        console.log(response);
-    });
-
-    document.getElementById('play').addEventListener('click', async () => {
-        const move = document.getElementById('move').value;
-        const passphrase = document.getElementById('passphrase').value;
-        const combinedString = move + passphrase;
-
-        const encryptedMove = web3.utils.sha3(combinedString);
-
-        const response = await contract.methods.play(encryptedMove).send({ from: accounts[0] });
-        console.log(response);
-    });
-
-    document.getElementById('reveal').addEventListener('click', async () => {
-        const move = document.getElementById('move').value;
-        const passphrase = document.getElementById('passphrase').value;
-        const combinedString = move + passphrase;
-
-        const response = await contract.methods.reveal(combinedString).send({ from: accounts[0] });
-        console.log(response);
-    });
-
-    document.getElementById('outcome').addEventListener('click', async () => {
-        const outcome = await contract.methods.getOutcome().call({ from: accounts[0] });
-        console.log(outcome);
-    });
-
-    async function updateContractBalance() {
-        const balance = await contract.methods.getContractBalance().call();
-        document.getElementById('contractBalance').innerText = `Contract Balance: ${web3.utils.fromWei(balance, 'tbnb')} tBNB`;
-    }
-
-    async function updatePlayerID() {
-        const id = await contract.methods.whoAmI().call({ from: accounts[0] });
-        document.getElementById('playerID').innerText = `Your Player ID: ${id}`;
-    }
-
-    async function updatePlayedStatus() {
-        const status = await contract.methods.bothPlayed().call();
-        document.getElementById('playedStatus').innerText = `Both Played: ${status}`;
-    }
-
-    async function updateRevealedStatus() {
-        const status = await contract.methods.bothRevealed().call();
-        document.getElementById('revealedStatus').innerText = `Both Revealed: ${status}`;
-    }
-
-    async function updateRevealTime() {
-        const time = await contract.methods.revealTimeLeft().call();
-        document.getElementById('revealTime').innerText = `Reveal Time Left: ${time} seconds`;
-    }
-
-    function updateGameState() {
-        updateContractBalance();
-        updatePlayerID();
-        updatePlayedStatus();
-        updateRevealedStatus();
-        updateRevealTime();
-    }
-
-    document.getElementById('updateState').addEventListener('click', updateGameState);
-
-    // Update the game state at regular intervals (e.g., every 10 seconds):
-    setInterval(updateGameState, 10000);
-
+function initApp() {
+    document.getElementById('register').addEventListener('click', register);
+    document.getElementById('rock').addEventListener('click', () => playMove("Rock"));
+    document.getElementById('paper').addEventListener('click', () => playMove("Paper"));
+    document.getElementById('scissors').addEventListener('click', () => playMove("Scissors"));
+    document.getElementById('reveal').addEventListener('click', revealMove);
+    updateInfo();
 }
 
-init();
+async function register() {
+    const accounts = await web3.eth.getAccounts();
+    contract.methods.register().send({ from: accounts[0], value: web3.utils.toWei("0.0001", "ether") });
+}
+
+function playMove(move) {
+    const password = document.getElementById('password').value;
+    const encryptedMove = web3.utils.sha3(move + password);
+    contract.methods.play(encryptedMove).send({ from: web3.eth.defaultAccount });
+}
+
+function revealMove() {
+    const move = document.getElementById('moveReveal').value;
+    const password = document.getElementById('passwordReveal').value;
+    contract.methods.reveal(move, password).send({ from: web3.eth.defaultAccount });
+}
+
+async function updateInfo() {
+    const balance = await contract.methods.getContractBalance().call();
+    const player = await contract.methods.whoAmI().call();
+    const bothPlayed = await contract.methods.bothPlayed().call();
+    const bothRevealed = await contract.methods.bothRevealed().call();
+    
+    document.getElementById('contractBalance').innerText = "Contract Balance: " + web3.utils.fromWei(balance, "ether") + " tBNB";
+    document.getElementById('playerStatus').innerText = "Player Status: " + (player == 0 ? "Not registered" : "Player " + player);
+    if (bothRevealed) {
+        document.getElementById('gameState').innerText = "Game State: Game Over";
+    } else if (bothPlayed) {
+        document.getElementById('gameState').innerText = "Game State: Waiting for reveal";
+    } else {
+        document.getElementById('gameState').innerText = "Game State: Waiting for moves";
+    }
+}
