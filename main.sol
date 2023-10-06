@@ -1,118 +1,104 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-contract RockPaperScissors {
-    enum Move { None, Rock, Paper, Scissors }
-    struct Player {
-        bytes32 encryptedMove;
-        Move move;
+// Connect to Metamask
+window.addEventListener('load', async () => {
+    if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+            await ethereum.enable(); // Request access
+        } catch (error) {
+            console.error("User denied account access");
+        }
     }
-
-    address payable public player1;
-    address payable public player2;
-    Player public player1Data;
-    Player public player2Data;
-
-    uint256 public betAmount = 0.0001 ether;
-    uint256 constant REVEAL_TIMEOUT = 1 hours;
-    uint256 public revealDeadline;
-
-    modifier onlyPlayers() {
-        require(msg.sender == player1 || msg.sender == player2, "Not a player");
-        _;
+    else if (window.web3) {
+        window.web3 = new Web3(web3.currentProvider);
     }
+    else {
+        console.error('Non-Ethereum browser detected. Consider trying MetaMask!');
+    }
+    initApp();
+});
 
-    function register() external payable {
-        require(msg.value >= betAmount, "Minimum bet amount not sent");
-        if (player1 == address(0)) {
-            player1 = payable(msg.sender);
-        } else if (player2 == address(0) && msg.sender != player1) {
-            player2 = payable(msg.sender);
-            revealDeadline = block.timestamp + REVEAL_TIMEOUT;
+const contractAddress = 'YOUR_CONTRACT_ADDRESS_HERE';
+const abi = []; // TODO: Add your ABI generated from the Solidity compiler
+const contract = new web3.eth.Contract(abi, contractAddress);
+
+function initApp() {
+    document.getElementById('register').addEventListener('click', register);
+    document.getElementById('rock').addEventListener('click', () => playMove("Rock"));
+    document.getElementById('paper').addEventListener('click', () => playMove("Paper"));
+    document.getElementById('scissors').addEventListener('click', () => playMove("Scissors"));
+    document.getElementById('reveal').addEventListener('click', revealMove);
+    updateInfo();
+    listenForEvents();
+}
+
+async function register() {
+    const accounts = await web3.eth.getAccounts();
+    contract.methods.register().send({ from: accounts[0], value: web3.utils.toWei("0.0001", "ether") });
+}
+
+function playMove(move) {
+    const password = document.getElementById('password').value;
+    const encryptedMove = web3.utils.sha3(move + password);
+    contract.methods.play(encryptedMove).send({ from: web3.eth.defaultAccount });
+}
+
+function revealMove() {
+    const move = document.getElementById('moveReveal').value;
+    const password = document.getElementById('passwordReveal').value;
+    contract.methods.reveal(move, password).send({ from: web3.eth.defaultAccount });
+}
+
+async function updateInfo() {
+    const balance = await contract.methods.getContractBalance().call();
+    const player = await contract.methods.whoAmI().call();
+    const bothPlayed = await contract.methods.bothPlayed().call();
+    const bothRevealed = await contract.methods.bothRevealed().call();
+    
+    document.getElementById('contractBalance').innerText = "Contract Balance: " + web3.utils.fromWei(balance, "ether") + " tBNB";
+    document.getElementById('playerStatus').innerText = "Player Status: " + (player == 0 ? "Not registered" : "Player " + player);
+    if (bothRevealed) {
+        document.getElementById('gameState').innerText = "Game State: Game Over";
+    } else if (bothPlayed) {
+        document.getElementById('gameState').innerText = "Game State: Waiting for reveal";
+    } else {
+        document.getElementById('gameState').innerText = "Game State: Waiting for moves";
+    }
+}
+
+function listenForEvents() {
+    contract.events.Registered({}, (error, event) => {
+        if (!error) {
+            alert("New player registered: " + event.returnValues.player);
+            updateInfo();
         } else {
-            revert("Already two players registered");
+            console.error(error);
         }
-    }
+    });
 
-    function play(bytes32 _encryptedMove) external onlyPlayers {
-        require(player2 != address(0), "Second player not registered yet");
-        Player storage currentPlayer = (msg.sender == player1) ? player1Data : player2Data;
-        require(currentPlayer.encryptedMove == bytes32(0), "Move already made");
-        currentPlayer.encryptedMove = _encryptedMove;
-    }
-
-    function reveal(string memory _move, string memory _password) external onlyPlayers {
-        require(block.timestamp <= revealDeadline, "Reveal time passed");
-        Player storage currentPlayer = (msg.sender == player1) ? player1Data : player2Data;
-
-        bytes32 expectedHash = keccak256(abi.encodePacked(_move, _password));
-        require(currentPlayer.encryptedMove == expectedHash, "Move does not match the encrypted one");
-
-        if (keccak256(abi.encodePacked(_move)) == keccak256("Rock")) {
-            currentPlayer.move = Move.Rock;
-        } else if (keccak256(abi.encodePacked(_move)) == keccak256("Paper")) {
-            currentPlayer.move = Move.Paper;
-        } else if (keccak256(abi.encodePacked(_move)) == keccak256("Scissors")) {
-            currentPlayer.move = Move.Scissors;
+    contract.events.Played({}, (error, event) => {
+        if (!error) {
+            alert("Player made a move: " + event.returnValues.player);
+            updateInfo();
         } else {
-            revert("Invalid move");
+            console.error(error);
         }
+    });
 
-        if (player1Data.move != Move.None && player2Data.move != Move.None) {
-            determineWinner();
-        }
-    }
-
-    function determineWinner() internal {
-        int winner = checkWinner(player1Data.move, player2Data.move);
-        if (winner == 0) {
-            player1.transfer(betAmount);
-            player2.transfer(betAmount);
-        } else if (winner == 1) {
-            player1.transfer(address(this).balance);
+    contract.events.Revealed({}, (error, event) => {
+        if (!error) {
+            alert("Player revealed a move: " + event.returnValues.player);
+            updateInfo();
         } else {
-            player2.transfer(address(this).balance);
+            console.error(error);
         }
+    });
 
-        resetGame();
-    }
-
-    function checkWinner(Move _move1, Move _move2) internal pure returns(int) {
-        if (_move1 == _move2) return 0;  // Tie
-        if ((_move1 == Move.Rock && _move2 == Move.Scissors) || 
-            (_move1 == Move.Paper && _move2 == Move.Rock) || 
-            (_move1 == Move.Scissors && _move2 == Move.Paper)) return 1;  // Player 1 wins
-        return -1;  // Player 2 wins
-    }
-
-    function resetGame() internal {
-        player1 = payable(address(0));
-        player2 = payable(address(0));
-        delete player1Data;
-        delete player2Data;
-    }
-
-    // Helper functions
-    function getContractBalance() external view returns(uint) {
-        return address(this).balance;
-    }
-
-    function whoAmI() external view returns(int) {
-        if (msg.sender == player1) return 1;
-        if (msg.sender == player2) return 2;
-        return 0;
-    }
-
-    function bothPlayed() external view returns(bool) {
-        return player1Data.encryptedMove != bytes32(0) && player2Data.encryptedMove != bytes32(0);
-    }
-
-    function bothRevealed() external view returns(bool) {
-        return player1Data.move != Move.None && player2Data.move != Move.None;
-    }
-
-    function revealTimeLeft() external view returns(uint) {
-        if (block.timestamp > revealDeadline) return 0;
-        return revealDeadline - block.timestamp;
-    }
+    contract.events.GameOver({}, (error, event) => {
+        if (!error) {
+            alert("Game over. Winner: " + event.returnValues.winner + ". Amount: " + web3.utils.fromWei(event.returnValues.amount, "ether") + " tBNB");
+            updateInfo();
+        } else {
+            console.error(error);
+        }
+    });
 }
