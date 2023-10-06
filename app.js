@@ -19,29 +19,10 @@ const abi = [
 				"internalType": "address",
 				"name": "loser",
 				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "reward",
-				"type": "uint256"
 			}
 		],
 		"name": "GameResult",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "_commit",
-				"type": "bytes32"
-			}
-		],
-		"name": "joinGame",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -51,12 +32,6 @@ const abi = [
 				"internalType": "address",
 				"name": "player1",
 				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes32",
-				"name": "commit",
-				"type": "bytes32"
 			}
 		],
 		"name": "NewGame",
@@ -70,34 +45,10 @@ const abi = [
 				"internalType": "address",
 				"name": "player2",
 				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes32",
-				"name": "commit",
-				"type": "bytes32"
 			}
 		],
 		"name": "PlayerJoined",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "enum RockPaperScissors.Choice",
-				"name": "_choice",
-				"type": "uint8"
-			},
-			{
-				"internalType": "string",
-				"name": "_secret",
-				"type": "string"
-			}
-		],
-		"name": "revealChoice",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -107,29 +58,10 @@ const abi = [
 				"internalType": "address",
 				"name": "player",
 				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "enum RockPaperScissors.Choice",
-				"name": "choice",
-				"type": "uint8"
 			}
 		],
 		"name": "Revealed",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "_commit",
-				"type": "bytes32"
-			}
-		],
-		"name": "startGame",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
 	},
 	{
 		"inputs": [],
@@ -225,6 +157,19 @@ const abi = [
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_commit",
+				"type": "bytes32"
+			}
+		],
+		"name": "joinGame",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "owner",
 		"outputs": [
@@ -235,6 +180,37 @@ const abi = [
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "_choice",
+				"type": "uint8"
+			},
+			{
+				"internalType": "string",
+				"name": "_secret",
+				"type": "string"
+			}
+		],
+		"name": "revealChoice",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_commit",
+				"type": "bytes32"
+			}
+		],
+		"name": "startGame",
+		"outputs": [],
+		"stateMutability": "payable",
 		"type": "function"
 	}
 ]; // Replace with your contract ABI
