@@ -1,36 +1,96 @@
-// Initialize web3
-if (typeof web3 !== 'undefined') {
-    web3 = new Web3(web3.currentProvider);
-} else {
-    alert("Please install MetaMask!");
-}
+let web3 = new Web3(window.ethereum);
+let contract;
+let userAddress;
 
-const contractAddress = "0xBA651409093FfCd3dD562Cd7C689Cf462a0656A2"; 
-const abi = [
+async function init() {
+    let networkId = await web3.eth.net.getId();
+    if (typeof window.ethereum !== 'undefined') {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        userAddress = (await web3.eth.getAccounts())[0];
+
+        let contractAddress = "0x8496A2f4F889D86AD26cC7A512E5faAFEc88C648"; // Replace with your deployed contract address
+        let abi = [
 	{
-		"inputs": [],
-		"name": "MIN_BET",
-		"outputs": [
+		"anonymous": false,
+		"inputs": [
 			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "winner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
 				"internalType": "uint256",
-				"name": "",
+				"name": "reward",
 				"type": "uint256"
 			}
 		],
-		"stateMutability": "view",
+		"name": "GameFinished",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "player",
+				"type": "address"
+			}
+		],
+		"name": "MoveMade",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "encryptedMove",
+				"type": "bytes32"
+			}
+		],
+		"name": "play",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "REVEAL_TIMEOUT",
-		"outputs": [
+		"anonymous": false,
+		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
+				"indexed": false,
+				"internalType": "address",
+				"name": "player",
+				"type": "address"
 			}
 		],
-		"stateMutability": "view",
+		"name": "PlayerRegistered",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "register",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "enum RockPaperScissors.Move",
+				"name": "move",
+				"type": "uint8"
+			},
+			{
+				"internalType": "string",
+				"name": "password",
+				"type": "string"
+			}
+		],
+		"name": "reveal",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -73,34 +133,8 @@ const abi = [
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "encrMove",
-				"type": "bytes32"
-			}
-		],
-		"name": "play",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [],
-		"name": "player1",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "player1Bet",
+		"name": "numPlayers",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -112,106 +146,45 @@ const abi = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "player1EncryptedMove",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "player1Move",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "player2",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "player2Bet",
-		"outputs": [
+		"inputs": [
 			{
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "player2EncryptedMove",
+		"name": "players",
 		"outputs": [
 			{
 				"internalType": "bytes32",
-				"name": "",
+				"name": "encryptedMove",
 				"type": "bytes32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "player2Move",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "register",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "clearMove",
-				"type": "string"
 			},
 			{
-				"internalType": "string",
-				"name": "password",
-				"type": "string"
+				"internalType": "enum RockPaperScissors.Move",
+				"name": "move",
+				"type": "uint8"
+			},
+			{
+				"internalType": "address payable",
+				"name": "addr",
+				"type": "address"
 			}
 		],
-		"name": "reveal",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "REVEAL_TIMEOUT",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -242,19 +215,6 @@ const abi = [
 	},
 	{
 		"inputs": [],
-		"name": "state",
-		"outputs": [
-			{
-				"internalType": "enum RockPaperScissors.GameState",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "whoAmI",
 		"outputs": [
 			{
@@ -266,38 +226,40 @@ const abi = [
 		"stateMutability": "view",
 		"type": "function"
 	}
-]; 
+]; // Replace with your contract ABI
 
-const contract = new web3.eth.Contract(abi, contractAddress);
-
-async function register() {
-    const accounts = await web3.eth.getAccounts();
-    const betAmount = web3.utils.toWei("0.0001", "ether");
-    contract.methods.register().send({ from: accounts[0], value: betAmount });
-}
-
-async function submitMove() {
-    const accounts = await web3.eth.getAccounts();
-    const encryptedMove = document.getElementById("encryptedMove").value;
-    contract.methods.play(encryptedMove).send({ from: accounts[0] });
-}
-
-async function revealMove() {
-    const accounts = await web3.eth.getAccounts();
-    const clearMove = document.getElementById("clearMove").value;
-    const password = document.getElementById("password").value;
-    contract.methods.reveal(clearMove, password).send({ from: accounts[0] });
-}
-
-async function checkStatus() {
-    const isPlayer1 = await contract.methods.whoAmI().call();
-    const statusElement = document.getElementById("status");
-    if (isPlayer1 === "1") {
-        statusElement.innerText = "You are Player 1.";
-    } else if (isPlayer1 === "2") {
-        statusElement.innerText = "You are Player 2.";
+        contract = new web3.eth.Contract(abi, contractAddress);
     } else {
-        statusElement.innerText = "You are not registered.";
+        alert("Please install MetaMask!");
     }
 }
 
+async function register() {
+    await contract.methods.register().send({ value: web3.utils.toWei('0.0001', 'ether'), from: userAddress });
+}
+
+async function play() {
+    let move = document.getElementById('move').value;
+    let password = document.getElementById('password').value;
+    let encryptedMove = web3.utils.sha3(move + password);
+
+    await contract.methods.play(encryptedMove).send({ from: userAddress });
+}
+
+async function reveal() {
+    let move = document.getElementById('move').value;
+    let password = document.getElementById('password').value;
+
+    // Convert move string to enum value
+    let moveEnum = { "Rock": 1, "Paper": 2, "Scissors": 3 };
+    await contract.methods.reveal(moveEnum[move], password).send({ from: userAddress });
+}
+
+async function getGameInfo() {
+    let info = "Player 1: " + (await contract.methods.players(0).call()).addr;
+    info += "\nPlayer 2: " + (await contract.methods.players(1).call()).addr;
+
+    document.getElementById('gameInfo').innerText = info;
+}
+
+init();
