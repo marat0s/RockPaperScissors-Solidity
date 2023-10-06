@@ -246,7 +246,7 @@ async function startGame() {
     const choice = document.getElementById("playerChoice").value;
     const secret = document.getElementById("secretString").value;
 
-    const hash = await contract.methods.getChoiceCommit(choice, secret).call();
+    const hash = contract.methods.getChoiceCommit(choice, secret).encodeABI();
 
     const accounts = await web3.eth.getAccounts();
     await contract.methods.startGame(hash).send({
@@ -260,7 +260,7 @@ async function joinGame() {
     const choice = document.getElementById("playerChoice").value;
     const secret = document.getElementById("secretString").value;
 
-    const hash = await contract.methods.getChoiceCommit(choice, secret).call();
+    const hash = contract.methods.getChoiceCommit(choice, secret).encodeABI();
 
     const accounts = await web3.eth.getAccounts();
     await contract.methods.joinGame(hash).send({
@@ -277,21 +277,3 @@ async function revealChoice() {
     const accounts = await web3.eth.getAccounts();
     await contract.methods.revealChoice(choice, secret).send({ from: accounts[0] });
 }
-
-contract.events.Revealed({}, (error, event) => {
-    if (error) console.error(error);
-    const playerAddress = event.returnValues.player;
-    const playerChoice = ["None", "Rock", "Paper", "Scissors"][event.returnValues.choice];
-    if (playerAddress == document.getElementById("player1Info").innerText.split(": ")[1]) {
-        document.getElementById("choiceInfo").innerText = `Player 1 choice: ${playerChoice}`;
-    } else {
-        document.getElementById("choiceInfo").innerText += `, Player 2 choice: ${playerChoice}`;
-    }
-});
-
-contract.events.GameResult({}, (error, event) => {
-    if (error) console.error(error);
-    const winner = event.returnValues.winner;
-    const reward = web3.utils.fromWei(event.returnValues.reward, 'ether');
-    document.getElementById("results").innerText = `${winner} won ${reward} tBNB!`;
-});
