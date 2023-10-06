@@ -2,100 +2,123 @@
 pragma solidity ^0.8.0;
 
 contract RockPaperScissors {
-    enum Move { None, Rock, Paper, Scissors }
-    
+
+    address public owner;
+    uint256 public betAmount = 0.0001 ether;
+
+    enum GameState {WaitingForPlayer, WaitingForReveal, GameOver}
+    enum Choice {None, Rock, Paper, Scissors}
+
     struct Game {
-        bytes32 player1Move;
-        bytes32 player2Move;
-        Move revealedMove1;
-        Move revealedMove2;
         address payable player1;
         address payable player2;
-        uint256 revealDeadline;
+        bytes32 player1Commit;
+        bytes32 player2Commit;
+        Choice player1Reveal;
+        Choice player2Reveal;
+        GameState state;
     }
 
-    mapping(bytes32 => Game) public games;
-    uint256 public REVEAL_TIMEOUT = 3 minutes;
+    Game public currentGame;
 
-    event GameCreated(bytes32 gameId);
-    event PlayerRegistered(bytes32 gameId, address player);
-    event MoveMade(bytes32 gameId, address player);
-    event GameFinished(bytes32 gameId, address winner, uint256 reward);
-
-    function createGame(bytes32 encryptedMove) public payable {
-        require(msg.value == 0.0001 ether, "Send exact amount");
-
-        bytes32 gameId = keccak256(abi.encodePacked(msg.sender, block.timestamp));
-        games[gameId].player1Move = encryptedMove;
-        games[gameId].player1 = payable(msg.sender);
-
-        emit GameCreated(gameId);
+    modifier onlyPlayers() {
+        require(msg.sender == currentGame.player1 || msg.sender == currentGame.player2, "Not a player in the current game");
+        _;
     }
 
-    function joinGame(bytes32 gameId, bytes32 encryptedMove) public payable {
-        require(msg.value == 0.0001 ether, "Send exact amount");
-        require(games[gameId].player2 == address(0), "Game is full");
-
-        games[gameId].player2Move = encryptedMove;
-        games[gameId].player2 = payable(msg.sender);
-        games[gameId].revealDeadline = block.timestamp + REVEAL_TIMEOUT;
-
-        emit PlayerRegistered(gameId, msg.sender);
+    modifier inState(GameState _state) {
+        require(currentGame.state == _state, "Invalid game state");
+        _;
     }
 
-    function reveal(bytes32 gameId, Move move, string memory password) public {
-        require(block.timestamp < games[gameId].revealDeadline, "Reveal phase is over");
+    event NewGame(address player1, bytes32 commit);
+    event PlayerJoined(address player2, bytes32 commit);
+    event Revealed(address player, Choice choice);
+    event GameResult(address winner, address loser, uint256 reward);
 
-        if(msg.sender == games[gameId].player1) {
-            handlePlayer1Reveal(gameId, move, password);
-        } else if(msg.sender == games[gameId].player2) {
-            handlePlayer2Reveal(gameId, move, password);
+    constructor() {
+        owner = msg.sender;
+        currentGame.state = GameState.WaitingForPlayer;
+    }
+
+    function startGame(bytes32 _commit) external payable {
+        require(currentGame.state == GameState.WaitingForPlayer, "Game already in progress");
+        require(msg.value == betAmount, "Incorrect bet amount");
+
+        currentGame.player1 = payable(msg.sender);
+        currentGame.player1Commit = _commit;
+
+        currentGame.state = GameState.WaitingForReveal;
+
+        emit NewGame(msg.sender, _commit);
+    }
+
+    function joinGame(bytes32 _commit) external payable inState(GameState.WaitingForReveal) {
+        require(msg.value == betAmount, "Incorrect bet amount");
+        require(currentGame.player2 == address(0), "Player 2 already joined");
+
+        currentGame.player2 = payable(msg.sender);
+        currentGame.player2Commit = _commit;
+
+        emit PlayerJoined(msg.sender, _commit);
+    }
+
+    function revealChoice(Choice _choice, string memory _secret) external onlyPlayers inState(GameState.WaitingForReveal) {
+        require(_choice != Choice.None, "Invalid choice");
+
+        bytes32 computedHash = keccak256(abi.encodePacked(_choice, _secret));
+
+        if(msg.sender == currentGame.player1) {
+            require(currentGame.player1Commit == computedHash, "Invalid reveal");
+            currentGame.player1Reveal = _choice;
         } else {
-            revert("Not a player in this game");
+            require(currentGame.player2Commit == computedHash, "Invalid reveal");
+            currentGame.player2Reveal = _choice;
         }
 
-        if(games[gameId].revealedMove1 != Move.None && games[gameId].revealedMove2 != Move.None) {
-            determineWinner(gameId);
+        emit Revealed(msg.sender, _choice);
+
+        if(currentGame.player1Reveal != Choice.None && currentGame.player2Reveal != Choice.None) {
+            determineWinner();
         }
     }
 
-    function handlePlayer1Reveal(bytes32 gameId, Move move, string memory password) private {
-        bytes32 encrypted = keccak256(abi.encodePacked(move, password));
-        require(encrypted == games[gameId].player1Move, "Invalid move or password for player 1");
-        games[gameId].revealedMove1 = move;
-    }
+    function determineWinner() internal {
+        Choice player1Choice = currentGame.player1Reveal;
+        Choice player2Choice = currentGame.player2Reveal;
 
-    function handlePlayer2Reveal(bytes32 gameId, Move move, string memory password) private {
-        bytes32 encrypted = keccak256(abi.encodePacked(move, password));
-        require(encrypted == games[gameId].player2Move, "Invalid move or password for player 2");
-        games[gameId].revealedMove2 = move;
-    }
+        address winner = address(0);
+        address loser = address(0);
+        uint256 reward = 0;
 
-    function determineWinner(bytes32 gameId) private {
-        Game storage currentGame = games[gameId];
-        Move player1Move = currentGame.revealedMove1;
-        Move player2Move = currentGame.revealedMove2;
-
-        if(player1Move == player2Move) {
-            currentGame.player1.transfer(0.00005 ether);
-            currentGame.player2.transfer(0.00005 ether);
-            emit GameFinished(gameId, address(0), 0);
-            return;
-        }
-    
-        bool player1Wins = 
-            (player1Move == Move.Rock && player2Move == Move.Scissors) ||
-            (player1Move == Move.Paper && player2Move == Move.Rock) ||
-            (player1Move == Move.Scissors && player2Move == Move.Paper);
-    
-        if(player1Wins) {
-            currentGame.player1.transfer(0.0001 ether);
-            emit GameFinished(gameId, currentGame.player1, 0.0001 ether);
+        if(player1Choice == player2Choice) {
+            currentGame.player1.transfer(betAmount);
+            currentGame.player2.transfer(betAmount);
+        } else if ((player1Choice == Choice.Rock && player2Choice == Choice.Scissors) ||
+                   (player1Choice == Choice.Paper && player2Choice == Choice.Rock) ||
+                   (player1Choice == Choice.Scissors && player2Choice == Choice.Paper)) {
+            winner = currentGame.player1;
+            loser = currentGame.player2;
+            reward = betAmount * 2;
+            currentGame.player1.transfer(reward);
         } else {
-            currentGame.player2.transfer(0.0001 ether);
-            emit GameFinished(gameId, currentGame.player2, 0.0001 ether);
+            winner = currentGame.player2;
+            loser = currentGame.player1;
+            reward = betAmount * 2;
+            currentGame.player2.transfer(reward);
         }
 
-        delete games[gameId];
+        emit GameResult(winner, loser, reward);
+
+        delete currentGame;
+        currentGame.state = GameState.WaitingForPlayer;
+    }
+
+    function getContractBalance() public view returns(uint256) {
+        return address(this).balance;
+    }
+
+    function getChoiceCommit(Choice _choice, string memory _secret) public pure returns(bytes32) {
+        return keccak256(abi.encodePacked(_choice, _secret));
     }
 }
