@@ -17,7 +17,7 @@ window.addEventListener('load', async () => {
     initApp();
 });
 
-const contractAddress = '0x5E05Eff66E4DcF5272963Cbbc63B18556A790F79';
+const contractAddress = '0x248332034bC2C2275F0b387fCd478B5b5291917a';
 const abi = [
 	{
 		"inputs": [],
