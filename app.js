@@ -1,4 +1,4 @@
-const contractAddress = '0x6176C438186cC9f5F42aFafEE16758Ee3cc11DAd'; 
+const contractAddress = '0x447744F95d33dF488F08C268B669bea948cC4223'; 
 const abi = [
 	{
 		"inputs": [],
@@ -29,6 +29,19 @@ const abi = [
 		],
 		"name": "GameResult",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_commit",
+				"type": "bytes32"
+			}
+		],
+		"name": "joinGame",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -69,6 +82,24 @@ const abi = [
 		"type": "event"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "_choice",
+				"type": "uint8"
+			},
+			{
+				"internalType": "string",
+				"name": "_secret",
+				"type": "string"
+			}
+		],
+		"name": "revealChoice",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -86,6 +117,19 @@ const abi = [
 		],
 		"name": "Revealed",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_commit",
+				"type": "bytes32"
+			}
+		],
+		"name": "startGame",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
 	},
 	{
 		"inputs": [],
@@ -181,19 +225,6 @@ const abi = [
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "_commit",
-				"type": "bytes32"
-			}
-		],
-		"name": "joinGame",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "owner",
 		"outputs": [
@@ -204,37 +235,6 @@ const abi = [
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "enum RockPaperScissors.Choice",
-				"name": "_choice",
-				"type": "uint8"
-			},
-			{
-				"internalType": "string",
-				"name": "_secret",
-				"type": "string"
-			}
-		],
-		"name": "revealChoice",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "_commit",
-				"type": "bytes32"
-			}
-		],
-		"name": "startGame",
-		"outputs": [],
-		"stateMutability": "payable",
 		"type": "function"
 	}
 ]; 
