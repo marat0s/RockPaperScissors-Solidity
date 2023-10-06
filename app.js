@@ -20,6 +20,44 @@ window.addEventListener('load', async () => {
 const contractAddress = '0x5BF5a2847Bf735a18f3360E6b27D747Ba78Cb804';
 const abi = [
 	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_encryptedMove",
+				"type": "bytes32"
+			}
+		],
+		"name": "play",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "register",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_move",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_password",
+				"type": "string"
+			}
+		],
+		"name": "reveal",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "betAmount",
 		"outputs": [
@@ -69,19 +107,6 @@ const abi = [
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "_encryptedMove",
-				"type": "bytes32"
-			}
-		],
-		"name": "play",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -144,31 +169,6 @@ const abi = [
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "register",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_move",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_password",
-				"type": "string"
-			}
-		],
-		"name": "reveal",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
