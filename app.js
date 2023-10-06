@@ -229,7 +229,7 @@ async function startGame() {
         from: accounts[0],
         value: web3.utils.toWei('0.0001', 'ether')
     });
-    document.getElementById("player1Info").innerText = `Player 1: ${accounts[0]}`;
+    document.getElementById("results").innerText = "Game started!";
 }
 
 async function joinGame() {
@@ -243,7 +243,7 @@ async function joinGame() {
         from: accounts[0],
         value: web3.utils.toWei('0.0001', 'ether')
     });
-    document.getElementById("player2Info").innerText = `Player 2: ${accounts[0]}`;
+    document.getElementById("results").innerText = "Joined game!";
 }
 
 async function revealChoice() {
@@ -252,22 +252,37 @@ async function revealChoice() {
 
     const accounts = await web3.eth.getAccounts();
     await contract.methods.revealChoice(choice, secret).send({ from: accounts[0] });
+    document.getElementById("results").innerText = "Choice revealed!";
 }
+
+// Event Listeners
+contract.events.NewGame({}, (error, event) => {
+    if (error) console.error(error);
+    document.getElementById("player1Info").innerText = `Player 1: ${event.returnValues.player1}`;
+});
+
+contract.events.PlayerJoined({}, (error, event) => {
+    if (error) console.error(error);
+    document.getElementById("player2Info").innerText = `Player 2: ${event.returnValues.player2}`;
+});
 
 contract.events.Revealed({}, (error, event) => {
     if (error) console.error(error);
     const playerAddress = event.returnValues.player;
-    const playerChoice = ["None", "Rock", "Paper", "Scissors"][event.returnValues.choice];
     if (playerAddress == document.getElementById("player1Info").innerText.split(": ")[1]) {
-        document.getElementById("choiceInfo").innerText = `Player 1 choice: ${playerChoice}`;
+        document.getElementById("choiceInfo").innerText = `Player 1 choice: Revealed`;
     } else {
-        document.getElementById("choiceInfo").innerText += `, Player 2 choice: ${playerChoice}`;
+        if (document.getElementById("choiceInfo").innerText.includes("Player 1")) {
+            document.getElementById("choiceInfo").innerText += `, Player 2 choice: Revealed`;
+        } else {
+            document.getElementById("choiceInfo").innerText = `Player 2 choice: Revealed`;
+        }
     }
 });
 
 contract.events.GameResult({}, (error, event) => {
     if (error) console.error(error);
     const winner = event.returnValues.winner;
-    const reward = web3.utils.fromWei(event.returnValues.reward, 'ether');
-    document.getElementById("results").innerText = `${winner} won ${reward} tBNB!`;
+    const loser = event.returnValues.loser;
+    document.getElementById("results").innerText = `${winner} won! ${loser} lost.`;
 });
