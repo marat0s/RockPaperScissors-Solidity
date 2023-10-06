@@ -3,33 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rock-Paper-Scissors DApp</title>
+    <title>Rock-Paper-Scissors</title>
 </head>
 <body>
+    <h1>Rock-Paper-Scissors Game</h1>
+    
+    <section>
+        <h2>Register</h2>
+        <button id="register">Register and Place Bet</button>
+    </section>
 
-<button id="register">Register</button>
+    <section>
+        <h2>Make a move</h2>
+        <input type="password" id="password" placeholder="Enter a secret password">
+        <button id="rock">Rock</button>
+        <button id="paper">Paper</button>
+        <button id="scissors">Scissors</button>
+    </section>
 
-<select id="move">
-    <option value="ROCK">Rock</option>
-    <option value="PAPER">Paper</option>
-    <option value="SCISSORS">Scissors</option>
-</select>
-<input id="passphrase" type="text" placeholder="Enter a secret passphrase">
-<button id="play">Play</button>
-<button id="reveal">Reveal</button>
-<button id="outcome">Check Outcome</button>
-<button id="updateState">Update Game State</button>
+    <section>
+        <h2>Reveal move</h2>
+        <input type="text" id="moveReveal" placeholder="Your move (e.g., Rock)">
+        <input type="password" id="passwordReveal" placeholder="Your secret password">
+        <button id="reveal">Reveal Move</button>
+    </section>
 
-<div id="info">
-    <p id="contractBalance">Contract Balance: </p>
-    <p id="playerID">Your Player ID: </p>
-    <p id="playedStatus">Both Played: </p>
-    <p id="revealedStatus">Both Revealed: </p>
-    <p id="revealTime">Reveal Time Left: </p>
-</div>
+    <section>
+        <h2>Game Info</h2>
+        <p id="contractBalance">Contract Balance: -</p>
+        <p id="playerStatus">Player Status: -</p>
+        <p id="gameState">Game State: -</p>
+    </section>
 
-<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.3.0/dist/web3.min.js"></script>
-<script src="app.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.3.5/dist/web3.min.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
