@@ -1,52 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rock-Paper-Scissors</title>
+    <title>Rock Paper Scissors</title>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.3.4/dist/web3.min.js"></script>
 </head>
+
 <body>
-    <h2>Rock-Paper-Scissors Game</h2>
-    <button onclick="register()">Register</button>
-    <br>
-    <input type="text" id="move" placeholder="Enter move (Rock/Paper/Scissors)">
-    <input type="text" id="password" placeholder="Enter password">
-    <button onclick="play()">Play</button>
-    <br>
-    <button onclick="reveal()">Reveal</button>
-    <br>
-    <div id="status"></div>
 
-    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.3.5/dist/web3.min.js"></script>
-    <script>
-        // Assuming MetaMask is installed
-        const web3 = new Web3(window.ethereum);
-        const contractAddress = "YOUR_CONTRACT_ADDRESS_HERE";
-        const abi = [ /* YOUR_CONTRACT_ABI_HERE */ ];
-        const contract = new web3.eth.Contract(abi, contractAddress);
+    <h2>Rock Paper Scissors Game</h2>
 
-        async function register() {
-            const accounts = await web3.eth.getAccounts();
-            await contract.methods.register().send({ from: accounts[0], value: web3.utils.toWei('0.0001', 'ether') });
-            document.getElementById("status").innerText = "Registered!";
-        }
+    <button onclick="register()">Register & Play</button>
+    <br><br>
 
-        async function play() {
-            const move = document.getElementById("move").value;
-            const password = document.getElementById("password").value;
-            const encryptedMove = web3.utils.sha3(move + password);
-            const accounts = await web3.eth.getAccounts();
-            await contract.methods.play(encryptedMove).send({ from: accounts[0] });
-            document.getElementById("status").innerText = "Move made!";
-        }
+    <input id="move" placeholder="Enter your move: Rock/Paper/Scissors">
+    <input id="password" placeholder="Enter a password">
+    <button onclick="play()">Submit Encrypted Move</button>
+    <button onclick="reveal()">Reveal Move</button>
+    <br><br>
 
-        async function reveal() {
-            const move = document.getElementById("move").value;
-            const password = document.getElementById("password").value;
-            const accounts = await web3.eth.getAccounts();
-            await contract.methods.reveal(move, password).send({ from: accounts[0] });
-            document.getElementById("status").innerText = "Move revealed!";
-        }
-    </script>
+    <h4>Game Info:</h4>
+    <button onclick="getGameInfo()">Refresh Game Info</button>
+    <p id="gameInfo">...</p>
+
+    <script src="app.js"></script>
 </body>
+
 </html>
