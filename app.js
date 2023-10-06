@@ -17,200 +17,8 @@ window.addEventListener('load', async () => {
     initApp();
 });
 
-const contractAddress = '0x5BF5a2847Bf735a18f3360E6b27D747Ba78Cb804';
-const abi = [
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "_encryptedMove",
-				"type": "bytes32"
-			}
-		],
-		"name": "play",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "register",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_move",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_password",
-				"type": "string"
-			}
-		],
-		"name": "reveal",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "betAmount",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "bothPlayed",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "bothRevealed",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getContractBalance",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "player1",
-		"outputs": [
-			{
-				"internalType": "address payable",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "player1Data",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "encryptedMove",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "enum RockPaperScissors.Move",
-				"name": "move",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "player2",
-		"outputs": [
-			{
-				"internalType": "address payable",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "player2Data",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "encryptedMove",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "enum RockPaperScissors.Move",
-				"name": "move",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "revealDeadline",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "revealTimeLeft",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "whoAmI",
-		"outputs": [
-			{
-				"internalType": "int256",
-				"name": "",
-				"type": "int256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]; // TODO: Add your ABI generated from the Solidity compiler
+const contractAddress = 'YOUR_CONTRACT_ADDRESS_HERE';
+const abi = []; // TODO: Add your ABI generated from the Solidity compiler
 const contract = new web3.eth.Contract(abi, contractAddress);
 
 function initApp() {
@@ -220,6 +28,7 @@ function initApp() {
     document.getElementById('scissors').addEventListener('click', () => playMove("Scissors"));
     document.getElementById('reveal').addEventListener('click', revealMove);
     updateInfo();
+    listenForEvents();
 }
 
 async function register() {
@@ -254,4 +63,42 @@ async function updateInfo() {
     } else {
         document.getElementById('gameState').innerText = "Game State: Waiting for moves";
     }
+}
+
+function listenForEvents() {
+    contract.events.Registered({}, (error, event) => {
+        if (!error) {
+            alert("New player registered: " + event.returnValues.player);
+            updateInfo();
+        } else {
+            console.error(error);
+        }
+    });
+
+    contract.events.Played({}, (error, event) => {
+        if (!error) {
+            alert("Player made a move: " + event.returnValues.player);
+            updateInfo();
+        } else {
+            console.error(error);
+        }
+    });
+
+    contract.events.Revealed({}, (error, event) => {
+        if (!error) {
+            alert("Player revealed a move: " + event.returnValues.player);
+            updateInfo();
+        } else {
+            console.error(error);
+        }
+    });
+
+    contract.events.GameOver({}, (error, event) => {
+        if (!error) {
+            alert("Game over. Winner: " + event.returnValues.winner + ". Amount: " + web3.utils.fromWei(event.returnValues.amount, "ether") + " tBNB");
+            updateInfo();
+        } else {
+            console.error(error);
+        }
+    });
 }
