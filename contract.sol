@@ -6,94 +6,88 @@ contract RockPaperScissors {
     struct Player {
         bytes32 encryptedMove;
         Move move;
+        address payable addr;
     }
 
-    address public player1;
-    address public player2;
-    mapping(address => Player) public players;
-    uint256 public betAmount = 0.0001 ether; // tBNB is equivalent to ether in BSC
-    uint256 public REVEAL_TIMEOUT = 3 minutes;
+    Player[2] public players;
+    uint256 public numPlayers = 0;
+    uint256 public REVEAL_TIMEOUT = 3 minutes; // Change as desired
     uint256 public revealDeadline;
 
-    modifier onlyPlayers() {
-        require(msg.sender == player1 || msg.sender == player2, "Not a player");
-        _;
+    event PlayerRegistered(address player);
+    event MoveMade(address player);
+    event GameFinished(address winner, uint256 reward);
+
+    function register() public payable {
+        require(msg.value == 0.0001 ether, "Send exact amount");
+        require(numPlayers < 2, "Game is full");
+        players[numPlayers].addr = payable(msg.sender);
+        numPlayers++;
+        emit PlayerRegistered(msg.sender);
     }
 
-    function register() external payable {
-        require(player1 == address(0) || player2 == address(0), "Already two players");
-        require(msg.value == betAmount, "Incorrect bet amount");
-
-        if (player1 == address(0)) {
-            player1 = msg.sender;
-        } else {
-            player2 = msg.sender;
-            revealDeadline = block.timestamp + REVEAL_TIMEOUT;
+    function play(bytes32 encryptedMove) public {
+        require(numPlayers == 2, "Game is not full");
+        require(encryptedMove != 0, "Invalid move");
+        for(uint8 i = 0; i < 2; i++) {
+            if(players[i].addr == msg.sender) {
+                players[i].encryptedMove = encryptedMove;
+                emit MoveMade(msg.sender);
+                return;
+            }
         }
     }
 
-    function play(bytes32 _encryptedMove) external onlyPlayers {
-        require(players[msg.sender].encryptedMove == bytes32(0), "Move already made");
-        players[msg.sender].encryptedMove = _encryptedMove;
-    }
-
-    function reveal(Move _move, string memory _password) external onlyPlayers {
-        require(block.timestamp <= revealDeadline, "Reveal phase is over");
-        require(players[msg.sender].move == Move.None, "Move already revealed");
-        require(keccak256(abi.encodePacked(_move, _password)) == players[msg.sender].encryptedMove, "Invalid move or password");
-
-        players[msg.sender].move = _move;
-
-        if (players[player1].move != Move.None && players[player2].move != Move.None) {
+    function reveal(Move move, string memory password) public {
+        require(block.timestamp < revealDeadline, "Reveal phase is over");
+        for(uint8 i = 0; i < 2; i++) {
+            if(players[i].addr == msg.sender) {
+                require(players[i].encryptedMove == keccak256(abi.encodePacked(move, password)), "Invalid move or password");
+                players[i].move = move;
+            }
+        }
+        if(players[0].move != Move.None && players[1].move != Move.None) {
             determineWinner();
         }
     }
 
-    function determineWinner() internal {
-        Move player1Move = players[player1].move;
-        Move player2Move = players[player2].move;
-
-        if (player1Move == player2Move) {
-            payable(player1).transfer(betAmount);
-            payable(player2).transfer(betAmount);
-        } else if ((player1Move == Move.Rock && player2Move == Move.Scissors) ||
-                   (player1Move == Move.Paper && player2Move == Move.Rock) ||
-                   (player1Move == Move.Scissors && player2Move == Move.Paper)) {
-            payable(player1).transfer(betAmount * 2);
+    function determineWinner() private {
+        Move[3] memory winningMoves = [Move.Scissors, Move.Rock, Move.Paper];
+        if(players[0].move == players[1].move) {
+            players[0].addr.transfer(0.00005 ether);
+            players[1].addr.transfer(0.00005 ether);
+            emit GameFinished(address(0), 0);
+        } else if (winningMoves[uint8(players[0].move) - 1] == players[1].move) {
+            players[0].addr.transfer(0.0001 ether);
+            emit GameFinished(players[0].addr, 0.0001 ether);
         } else {
-            payable(player2).transfer(betAmount * 2);
+            players[1].addr.transfer(0.0001 ether);
+            emit GameFinished(players[1].addr, 0.0001 ether);
         }
-
-        resetGame();
+        delete players;
+        numPlayers = 0;
     }
 
-    function resetGame() internal {
-        delete players[player1];
-        delete players[player2];
-        delete player1;
-        delete player2;
-    }
-
-    function getContractBalance() external view returns (uint256) {
+    function getContractBalance() public view returns (uint256) {
         return address(this).balance;
     }
 
-    function whoAmI() external view returns (uint8) {
-        if (msg.sender == player1) return 1;
-        if (msg.sender == player2) return 2;
+    function whoAmI() public view returns (uint8) {
+        if (players[0].addr == msg.sender) return 1;
+        if (players[1].addr == msg.sender) return 2;
         return 0;
     }
 
-    function bothPlayed() external view returns (bool) {
-        return players[player1].encryptedMove != bytes32(0) && players[player2].encryptedMove != bytes32(0);
+    function bothPlayed() public view returns (bool) {
+        return players[0].encryptedMove != 0 && players[1].encryptedMove != 0;
     }
 
-    function bothRevealed() external view returns (bool) {
-        return players[player1].move != Move.None && players[player2].move != Move.None;
+    function bothRevealed() public view returns (bool) {
+        return players[0].move != Move.None && players[1].move != Move.None;
     }
 
-    function revealTimeLeft() external view returns (uint256) {
-        if (block.timestamp > revealDeadline) return 0;
+    function revealTimeLeft() public view returns (uint256) {
+        if(block.timestamp > revealDeadline) return 0;
         return revealDeadline - block.timestamp;
     }
 }
